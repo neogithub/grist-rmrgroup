@@ -39,7 +39,7 @@
 
     grist.ready();
     grist.onRecords(data => {
-      records = data;
+      records = data.records;
       populateFilters(records);
       updateDashboard(records);
     });
@@ -54,6 +54,7 @@
 
     function populateSelect(selectId, options) {
       const select = document.getElementById(selectId);
+      select.innerHTML = '<option value="all">All</option>';
       options.forEach(option => {
         const opt = document.createElement("option");
         opt.value = option;
@@ -78,8 +79,8 @@
       }
 
       let totalProperties = filteredRecords.length;
-      let totalSquareFootage = filteredRecords.reduce((sum, r) => sum + (r.Size || 0), 0);
-      let totalBuildings = filteredRecords.reduce((sum, r) => sum + (r.Building_Count || 0), 0);
+      let totalSquareFootage = filteredRecords.reduce((sum, r) => sum + (parseFloat(r.Size) || 0), 0);
+      let totalBuildings = filteredRecords.reduce((sum, r) => sum + (parseInt(r.Building_Count) || 0), 0);
       document.getElementById("total-properties").innerText = totalProperties;
       document.getElementById("total-square-footage").innerText = totalSquareFootage.toLocaleString();
       document.getElementById("total-buildings").innerText = totalBuildings;
@@ -91,9 +92,9 @@
       const propertyTypes = countBy(records, 'Property_Type');
       const owners = countBy(records, 'Owner');
       
-      updateChart('stateChart', 'bar', stateCounts, 'Properties by State', stateChart);
-      updateChart('propertyTypeChart', 'pie', propertyTypes, 'Property Type Distribution', propertyTypeChart);
-      updateChart('ownershipChart', 'pie', owners, 'Ownership Breakdown', ownershipChart);
+      stateChart = updateChart('stateChart', 'bar', stateCounts, 'Properties by State', stateChart);
+      propertyTypeChart = updateChart('propertyTypeChart', 'pie', propertyTypes, 'Property Type Distribution', propertyTypeChart);
+      ownershipChart = updateChart('ownershipChart', 'pie', owners, 'Ownership Breakdown', ownershipChart);
     }
 
     function countBy(records, key) {
@@ -107,7 +108,7 @@
     function updateChart(id, type, data, title, chartRef) {
       const ctx = document.getElementById(id).getContext('2d');
       if (chartRef) chartRef.destroy();
-      chartRef = new Chart(ctx, {
+      return new Chart(ctx, {
         type: type,
         data: {
           labels: Object.keys(data),
@@ -118,7 +119,6 @@
         },
         options: { responsive: true, plugins: { title: { display: true, text: title } } }
       });
-      return chartRef;
     }
   </script>
 </body>
