@@ -11,10 +11,18 @@
     .info-box { background: #f4f4f4; padding: 15px; border-radius: 5px; width: 200px; text-align: center; }
     .charts { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px; }
     canvas { max-width: 500px; background: white; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+    .filters { margin-bottom: 15px; }
+    select { padding: 8px; margin-right: 10px; }
   </style>
 </head>
 <body>
   <h1>Property Dashboard</h1>
+  <div class="filters">
+    <label for="stateFilter">State:</label>
+    <select id="stateFilter"><option value="all">All States</option></select>
+    <label for="propertyTypeFilter">Property Type:</label>
+    <select id="propertyTypeFilter"><option value="all">All Property Types</option></select>
+  </div>
   <div class="dashboard">
     <div class="info-box"><h2>Total Properties</h2><p id="total-properties">-</p></div>
     <div class="info-box"><h2>Total Square Footage</h2><p id="total-square-footage">-</p></div>
@@ -30,17 +38,52 @@
     grist.ready();
     grist.onRecords(data => {
       records = data;
+      populateFilters(records);
       updateDashboard(records);
     });
+
+    function populateFilters(records) {
+      const states = [...new Set(records.map(r => r.State).filter(Boolean))].sort();
+      const propertyTypes = [...new Set(records.map(r => r.Property_Type).filter(Boolean))].sort();
+      
+      populateSelect("stateFilter", states);
+      populateSelect("propertyTypeFilter", propertyTypes);
+    }
+
+    function populateSelect(selectId, options) {
+      const select = document.getElementById(selectId);
+      options.forEach(option => {
+        const opt = document.createElement("option");
+        opt.value = option;
+        opt.textContent = option;
+        select.appendChild(opt);
+      });
+    }
+
+    document.getElementById("stateFilter").addEventListener("change", () => updateDashboard(records));
+    document.getElementById("propertyTypeFilter").addEventListener("change", () => updateDashboard(records));
+
     function updateDashboard(records) {
-      let totalProperties = records.length;
-      let totalSquareFootage = records.reduce((sum, r) => sum + (r.Size || 0), 0);
-      let totalBuildings = records.reduce((sum, r) => sum + (r.Building_Count || 0), 0);
+      let filteredRecords = records;
+      const selectedState = document.getElementById("stateFilter").value;
+      const selectedPropertyType = document.getElementById("propertyTypeFilter").value;
+      
+      if (selectedState !== "all") {
+        filteredRecords = filteredRecords.filter(r => r.State === selectedState);
+      }
+      if (selectedPropertyType !== "all") {
+        filteredRecords = filteredRecords.filter(r => r.Property_Type === selectedPropertyType);
+      }
+
+      let totalProperties = filteredRecords.length;
+      let totalSquareFootage = filteredRecords.reduce((sum, r) => sum + (r.Size || 0), 0);
+      let totalBuildings = filteredRecords.reduce((sum, r) => sum + (r.Building_Count || 0), 0);
       document.getElementById("total-properties").innerText = totalProperties;
       document.getElementById("total-square-footage").innerText = totalSquareFootage.toLocaleString();
       document.getElementById("total-buildings").innerText = totalBuildings;
-      createCharts(records);
+      createCharts(filteredRecords);
     }
+
     function createCharts(records) {
       const stateCounts = countBy(records, 'State');
       const propertyTypes = countBy(records, 'Property_Type');
@@ -49,6 +92,7 @@
       drawChart('propertyTypeChart', 'pie', propertyTypes, 'Property Type Distribution');
       drawChart('ownershipChart', 'pie', owners, 'Ownership Breakdown');
     }
+
     function countBy(records, key) {
       return records.reduce((acc, r) => {
         let value = r[key] || 'Unknown';
@@ -56,6 +100,7 @@
         return acc;
       }, {});
     }
+
     function drawChart(id, type, data, title) {
       const ctx = document.getElementById(id).getContext('2d');
       new Chart(ctx, {
