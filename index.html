@@ -35,6 +35,8 @@
   </div>
   <script>
     let records = [];
+    let stateChart, propertyTypeChart, ownershipChart;
+
     grist.ready();
     grist.onRecords(data => {
       records = data;
@@ -88,9 +90,10 @@
       const stateCounts = countBy(records, 'State');
       const propertyTypes = countBy(records, 'Property_Type');
       const owners = countBy(records, 'Owner');
-      drawChart('stateChart', 'bar', stateCounts, 'Properties by State');
-      drawChart('propertyTypeChart', 'pie', propertyTypes, 'Property Type Distribution');
-      drawChart('ownershipChart', 'pie', owners, 'Ownership Breakdown');
+      
+      updateChart('stateChart', 'bar', stateCounts, 'Properties by State', stateChart);
+      updateChart('propertyTypeChart', 'pie', propertyTypes, 'Property Type Distribution', propertyTypeChart);
+      updateChart('ownershipChart', 'pie', owners, 'Ownership Breakdown', ownershipChart);
     }
 
     function countBy(records, key) {
@@ -101,9 +104,10 @@
       }, {});
     }
 
-    function drawChart(id, type, data, title) {
+    function updateChart(id, type, data, title, chartRef) {
       const ctx = document.getElementById(id).getContext('2d');
-      new Chart(ctx, {
+      if (chartRef) chartRef.destroy();
+      chartRef = new Chart(ctx, {
         type: type,
         data: {
           labels: Object.keys(data),
@@ -114,6 +118,7 @@
         },
         options: { responsive: true, plugins: { title: { display: true, text: title } } }
       });
+      return chartRef;
     }
   </script>
 </body>
