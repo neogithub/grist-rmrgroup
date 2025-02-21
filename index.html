@@ -39,16 +39,18 @@
 
     grist.ready();
     grist.onRecords((data) => {
-      records = data.records;
-      if (!records || records.length === 0) {
+      if (!data || !data.records) {
         console.error("No records received from Grist");
         return;
       }
+      records = data.records;
+      console.log("Received records:", records);
       populateFilters(records);
       updateDashboard(records);
     });
 
     function populateFilters(records) {
+      console.log("Populating filters...");
       const stateFilter = document.getElementById("stateFilter");
       const propertyTypeFilter = document.getElementById("propertyTypeFilter");
       stateFilter.innerHTML = '<option value="all">All States</option>';
@@ -95,6 +97,7 @@
       let totalProperties = filteredRecords.length;
       let totalSquareFootage = filteredRecords.reduce((sum, r) => sum + (parseFloat(r.Size) || 0), 0);
       let totalBuildings = filteredRecords.reduce((sum, r) => sum + (parseInt(r.Building_Count) || 0), 0);
+      
       document.getElementById("total-properties").innerText = totalProperties;
       document.getElementById("total-square-footage").innerText = totalSquareFootage.toLocaleString();
       document.getElementById("total-buildings").innerText = totalBuildings;
