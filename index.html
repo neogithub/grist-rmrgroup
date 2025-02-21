@@ -38,28 +38,37 @@
     let stateChart, propertyTypeChart, ownershipChart;
 
     grist.ready();
-    grist.onRecords(data => {
+    grist.onRecords((data) => {
       records = data.records;
+      if (!records || records.length === 0) {
+        console.error("No records received from Grist");
+        return;
+      }
       populateFilters(records);
       updateDashboard(records);
     });
 
     function populateFilters(records) {
+      const stateFilter = document.getElementById("stateFilter");
+      const propertyTypeFilter = document.getElementById("propertyTypeFilter");
+      stateFilter.innerHTML = '<option value="all">All States</option>';
+      propertyTypeFilter.innerHTML = '<option value="all">All Property Types</option>';
+
       const states = [...new Set(records.map(r => r.State).filter(Boolean))].sort();
       const propertyTypes = [...new Set(records.map(r => r.Property_Type).filter(Boolean))].sort();
       
-      populateSelect("stateFilter", states);
-      populateSelect("propertyTypeFilter", propertyTypes);
-    }
-
-    function populateSelect(selectId, options) {
-      const select = document.getElementById(selectId);
-      select.innerHTML = '<option value="all">All</option>';
-      options.forEach(option => {
+      states.forEach(state => {
         const opt = document.createElement("option");
-        opt.value = option;
-        opt.textContent = option;
-        select.appendChild(opt);
+        opt.value = state;
+        opt.textContent = state;
+        stateFilter.appendChild(opt);
+      });
+      
+      propertyTypes.forEach(type => {
+        const opt = document.createElement("option");
+        opt.value = type;
+        opt.textContent = type;
+        propertyTypeFilter.appendChild(opt);
       });
     }
 
@@ -67,6 +76,11 @@
     document.getElementById("propertyTypeFilter").addEventListener("change", () => updateDashboard(records));
 
     function updateDashboard(records) {
+      if (!records || records.length === 0) {
+        console.error("No records available for filtering");
+        return;
+      }
+      
       let filteredRecords = records;
       const selectedState = document.getElementById("stateFilter").value;
       const selectedPropertyType = document.getElementById("propertyTypeFilter").value;
