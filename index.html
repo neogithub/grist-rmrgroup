@@ -18,8 +18,8 @@
     <div class="container">
         <h2>Property Dashboard</h2>
         <div class="filters">
-            <select id="stateFilter"></select>
-            <select id="propertyTypeFilter"></select>
+            <select id="stateFilter"><option value="All">All States</option></select>
+            <select id="propertyTypeFilter"><option value="All">All Property Types</option></select>
         </div>
         <div class="stats">
             <div class="stat-box" id="totalProperties">Total Properties: 0</div>
@@ -36,22 +36,22 @@
             let propertyType = document.getElementById('propertyTypeFilter').value;
             
             let filteredData = data.filter(row =>
-                (state === 'All' || row["State"] === state) &&
+                (state === 'All' || row.State === state) &&
                 (propertyType === 'All' || row["Property Type"] === propertyType)
             );
             
             document.getElementById('totalProperties').innerText = `Total Properties: ${filteredData.length}`;
-            document.getElementById('totalSF').innerText = `Total SF: ${filteredData.reduce((sum, row) => sum + (parseFloat(row["Size"]) || 0), 0).toLocaleString()}`;
+            document.getElementById('totalSF').innerText = `Total SF: ${filteredData.reduce((sum, row) => sum + (parseFloat(row.Size) || 0), 0).toLocaleString()}`;
             document.getElementById('totalBuildings').innerText = `Total Buildings: ${filteredData.reduce((sum, row) => sum + (parseInt(row["Building Count"]) || 0), 0)}`;
         }
         
         function populateFilters() {
-            let stateSet = new Set(['All']);
-            let propertyTypeSet = new Set(['All']);
+            let stateSet = new Set(["All"]);
+            let propertyTypeSet = new Set(["All"]);
             
             data.forEach(row => {
-                if (row["State"]) stateSet.add(row["State"]);
-                if (row["Property Type"]) propertyTypeSet.add(row["Property Type"]);
+                if (row.State && row.State.trim() !== "") stateSet.add(row.State);
+                if (row["Property Type"] && row["Property Type"].trim() !== "") propertyTypeSet.add(row["Property Type"]);
             });
             
             let stateDropdown = document.getElementById('stateFilter');
@@ -86,6 +86,7 @@
         Grist.ready();
         Grist.onRecords(records => {
             data = records.map(r => r.fields);
+            console.log("Loaded data:", data);
             populateFilters();
             updateDashboard();
             createCharts();
