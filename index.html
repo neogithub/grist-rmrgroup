@@ -49,30 +49,35 @@
     updateDashboard(records);
   });
 
-    function populateFilters(records) {
-      console.log("Populating filters...");
-      const stateFilter = document.getElementById("stateFilter");
-      const propertyTypeFilter = document.getElementById("propertyTypeFilter");
-      stateFilter.innerHTML = '<option value="all">All States</option>';
-      propertyTypeFilter.innerHTML = '<option value="all">All Property Types</option>';
+  function populateFilters(records) {
+    console.log("Populating filters...");
 
-      const states = [...new Set(records.map(r => r.State).filter(Boolean))].sort();
-      const propertyTypes = [...new Set(records.map(r => r.Property_Type).filter(Boolean))].sort();
-      
-      states.forEach(state => {
-        const opt = document.createElement("option");
-        opt.value = state;
-        opt.textContent = state;
-        stateFilter.appendChild(opt);
-      });
-      
-      propertyTypes.forEach(type => {
-        const opt = document.createElement("option");
-        opt.value = type;
-        opt.textContent = type;
-        propertyTypeFilter.appendChild(opt);
-      });
-    }
+    const stateFilter = document.getElementById("stateFilter");
+    const propertyTypeFilter = document.getElementById("propertyTypeFilter");
+
+    stateFilter.innerHTML = '<option value="all">All States</option>';
+    propertyTypeFilter.innerHTML = '<option value="all">All Property Types</option>';
+
+    const states = [...new Set(records.map(r => r.fields.State).filter(Boolean))].sort();
+    const propertyTypes = [...new Set(records.map(r => r.fields.Property_Type).filter(Boolean))].sort();
+
+    console.log("States:", states); // Debugging
+    console.log("Property Types:", propertyTypes); // Debugging
+
+    states.forEach(state => {
+      const opt = document.createElement("option");
+      opt.value = state;
+      opt.textContent = state;
+      stateFilter.appendChild(opt);
+    });
+
+    propertyTypes.forEach(type => {
+      const opt = document.createElement("option");
+      opt.value = type;
+      opt.textContent = type;
+      propertyTypeFilter.appendChild(opt);
+    });
+  }
 
     document.getElementById("stateFilter").addEventListener("change", () => updateDashboard(records));
     document.getElementById("propertyTypeFilter").addEventListener("change", () => updateDashboard(records));
