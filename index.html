@@ -39,15 +39,15 @@
 
     grist.ready();
     grist.onRecords((data) => {
-      if (!data || !data.records) {
-        console.error("No records received from Grist");
-        return;
-      }
-      records = data.records;
-      console.log("Received records:", records);
-      populateFilters(records);
-      updateDashboard(records);
-    });
+    if (!data || !data.records) {
+      console.error("No records received from Grist");
+      return;
+    }
+    records = data.records;
+    console.log("Received records:", records); // Debugging line
+    populateFilters(records);
+    updateDashboard(records);
+  });
 
     function populateFilters(records) {
       console.log("Populating filters...");
@@ -82,26 +82,27 @@
         console.error("No records available for filtering");
         return;
       }
-      
+
       let filteredRecords = records;
       const selectedState = document.getElementById("stateFilter").value;
       const selectedPropertyType = document.getElementById("propertyTypeFilter").value;
-      
+
       if (selectedState !== "all") {
-        filteredRecords = filteredRecords.filter(r => r.State === selectedState);
+        filteredRecords = filteredRecords.filter(r => r.fields.State === selectedState);
       }
       if (selectedPropertyType !== "all") {
-        filteredRecords = filteredRecords.filter(r => r.Property_Type === selectedPropertyType);
+        filteredRecords = filteredRecords.filter(r => r.fields.Property_Type === selectedPropertyType);
       }
 
       let totalProperties = filteredRecords.length;
-      let totalSquareFootage = filteredRecords.reduce((sum, r) => sum + (parseFloat(r.Size) || 0), 0);
-      let totalBuildings = filteredRecords.reduce((sum, r) => sum + (parseInt(r.Building_Count) || 0), 0);
-      
+      let totalSquareFootage = filteredRecords.reduce((sum, r) => sum + (parseFloat(r.fields.Size) || 0), 0);
+      let totalBuildings = filteredRecords.reduce((sum, r) => sum + (parseInt(r.fields.Building_Count) || 0), 0);
+
       document.getElementById("total-properties").innerText = totalProperties;
       document.getElementById("total-square-footage").innerText = totalSquareFootage.toLocaleString();
       document.getElementById("total-buildings").innerText = totalBuildings;
-      createCharts(filteredRecords);
+
+      setTimeout(() => createCharts(filteredRecords), 500); // Ensuring DOM readiness
     }
 
     function createCharts(records) {
