@@ -39,15 +39,19 @@
 
     grist.ready();
     grist.onRecords((data) => {
-    if (!data || !data.records) {
-      console.error("No records received from Grist");
-      return;
-    }
-    records = data.records;
-    console.log("Received records:", records); // Debugging line
-    populateFilters(records);
-    updateDashboard(records);
-  });
+      console.log("Grist Data Received:", data);
+
+      if (!data || !data.records || data.records.length === 0) {
+        console.warn("No records received from Grist or records are empty.");
+        return;
+      }
+
+      records = data.records;
+      console.log("Formatted Records:", records);
+
+      populateFilters(records);
+      updateDashboard(records);
+    });
 
   function populateFilters(records) {
     console.log("Populating filters...");
