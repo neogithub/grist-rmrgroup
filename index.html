@@ -1,152 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Property Dashboard</title>
-  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 16px; }
-    .dashboard { display: flex; gap: 20px; flex-wrap: wrap; }
-    .info-box { background: #f4f4f4; padding: 15px; border-radius: 5px; width: 200px; text-align: center; }
-    .charts { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px; }
-    canvas { max-width: 500px; background: white; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-    .filters { margin-bottom: 15px; }
-    select { padding: 8px; margin-right: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grist Property Dashboard</title>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 900px; margin: auto; }
+        .filters, .stats { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .stat-box { padding: 10px; border: 1px solid #ddd; text-align: center; flex: 1; margin: 5px; }
+        canvas { width: 100% !important; height: 400px !important; }
+    </style>
 </head>
 <body>
-  <h1>Property Dashboard</h1>
-  <div class="filters">
-    <label for="stateFilter">State:</label>
-    <select id="stateFilter"><option value="all">All States</option></select>
-    <label for="propertyTypeFilter">Property Type:</label>
-    <select id="propertyTypeFilter"><option value="all">All Property Types</option></select>
-  </div>
-  <div class="dashboard">
-    <div class="info-box"><h2>Total Properties</h2><p id="total-properties">-</p></div>
-    <div class="info-box"><h2>Total Square Footage</h2><p id="total-square-footage">-</p></div>
-    <div class="info-box"><h2>Total Buildings</h2><p id="total-buildings">-</p></div>
-  </div>
-  <div class="charts">
-    <canvas id="stateChart"></canvas>
-    <canvas id="propertyTypeChart"></canvas>
-    <canvas id="ownershipChart"></canvas>
-  </div>
-  <script>
-    let records = [];
-    let stateChart, propertyTypeChart, ownershipChart;
-
-    grist.ready();
-    grist.onRecords((data) => {
-      console.log("Grist Data Received:", data);
-
-      if (!data || !data.records || data.records.length === 0) {
-        console.warn("No records received from Grist or records are empty.");
-        return;
-      }
-
-      records = data.records;
-      console.log("Formatted Records:", records);
-
-      populateFilters(records);
-      updateDashboard(records);
-    });
-
-  function populateFilters(records) {
-    console.log("Populating filters...");
-
-    const stateFilter = document.getElementById("stateFilter");
-    const propertyTypeFilter = document.getElementById("propertyTypeFilter");
-
-    stateFilter.innerHTML = '<option value="all">All States</option>';
-    propertyTypeFilter.innerHTML = '<option value="all">All Property Types</option>';
-
-    const states = [...new Set(records.map(r => r.fields.State).filter(Boolean))].sort();
-    const propertyTypes = [...new Set(records.map(r => r.fields.Property_Type).filter(Boolean))].sort();
-
-    console.log("States:", states); // Debugging
-    console.log("Property Types:", propertyTypes); // Debugging
-
-    states.forEach(state => {
-      const opt = document.createElement("option");
-      opt.value = state;
-      opt.textContent = state;
-      stateFilter.appendChild(opt);
-    });
-
-    propertyTypes.forEach(type => {
-      const opt = document.createElement("option");
-      opt.value = type;
-      opt.textContent = type;
-      propertyTypeFilter.appendChild(opt);
-    });
-  }
-
-    document.getElementById("stateFilter").addEventListener("change", () => updateDashboard(records));
-    document.getElementById("propertyTypeFilter").addEventListener("change", () => updateDashboard(records));
-
-    function updateDashboard(records) {
-      if (!records || records.length === 0) {
-        console.error("No records available for filtering");
-        return;
-      }
-
-      let filteredRecords = records;
-      const selectedState = document.getElementById("stateFilter").value;
-      const selectedPropertyType = document.getElementById("propertyTypeFilter").value;
-
-      if (selectedState !== "all") {
-        filteredRecords = filteredRecords.filter(r => r.fields.State === selectedState);
-      }
-      if (selectedPropertyType !== "all") {
-        filteredRecords = filteredRecords.filter(r => r.fields.Property_Type === selectedPropertyType);
-      }
-
-      let totalProperties = filteredRecords.length;
-      let totalSquareFootage = filteredRecords.reduce((sum, r) => sum + (parseFloat(r.fields.Size) || 0), 0);
-      let totalBuildings = filteredRecords.reduce((sum, r) => sum + (parseInt(r.fields.Building_Count) || 0), 0);
-
-      document.getElementById("total-properties").innerText = totalProperties;
-      document.getElementById("total-square-footage").innerText = totalSquareFootage.toLocaleString();
-      document.getElementById("total-buildings").innerText = totalBuildings;
-
-      setTimeout(() => createCharts(filteredRecords), 500); // Ensuring DOM readiness
-    }
-
-    function createCharts(records) {
-      const stateCounts = countBy(records, 'State');
-      const propertyTypes = countBy(records, 'Property_Type');
-      const owners = countBy(records, 'Owner');
-      
-      stateChart = updateChart('stateChart', 'bar', stateCounts, 'Properties by State', stateChart);
-      propertyTypeChart = updateChart('propertyTypeChart', 'pie', propertyTypes, 'Property Type Distribution', propertyTypeChart);
-      ownershipChart = updateChart('ownershipChart', 'pie', owners, 'Ownership Breakdown', ownershipChart);
-    }
-
-    function countBy(records, key) {
-      return records.reduce((acc, r) => {
-        let value = r[key] || 'Unknown';
-        acc[value] = (acc[value] || 0) + 1;
-        return acc;
-      }, {});
-    }
-
-    function updateChart(id, type, data, title, chartRef) {
-      const ctx = document.getElementById(id).getContext('2d');
-      if (chartRef) chartRef.destroy();
-      return new Chart(ctx, {
-        type: type,
-        data: {
-          labels: Object.keys(data),
-          datasets: [{
-            data: Object.values(data),
-            backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40']
-          }]
-        },
-        options: { responsive: true, plugins: { title: { display: true, text: title } } }
-      });
-    }
-  </script>
+    <div class="container">
+        <h2>Property Dashboard</h2>
+        <div class="filters">
+            <select id="stateFilter"><option value="All">All States</option></select>
+            <select id="propertyTypeFilter"><option value="All">All Property Types</option></select>
+        </div>
+        <div class="stats">
+            <div class="stat-box" id="totalProperties">Total Properties: 0</div>
+            <div class="stat-box" id="totalSF">Total SF: 0</div>
+            <div class="stat-box" id="totalBuildings">Total Buildings: 0</div>
+        </div>
+        <canvas id="propertyTypeChart"></canvas>
+    </div>
+    <script>
+        let data = []; // This will hold the Grist data
+        
+        function updateDashboard() {
+            let state = document.getElementById('stateFilter').value;
+            let propertyType = document.getElementById('propertyTypeFilter').value;
+            
+            let filteredData = data.filter(row =>
+                (state === 'All' || row["State"] === state) &&
+                (propertyType === 'All' || row["Property Type"] === propertyType)
+            );
+            
+            document.getElementById('totalProperties').innerText = `Total Properties: ${filteredData.length}`;
+            document.getElementById('totalSF').innerText = `Total SF: ${filteredData.reduce((sum, row) => sum + (parseFloat(row["Size"]) || 0), 0).toLocaleString()}`;
+            document.getElementById('totalBuildings').innerText = `Total Buildings: ${filteredData.reduce((sum, row) => sum + (parseInt(row["Building Count"]) || 0), 0)}`;
+        }
+        
+        function populateFilters() {
+            let stateSet = new Set(['All']);
+            let propertyTypeSet = new Set(['All']);
+            
+            data.forEach(row => {
+                stateSet.add(row["State"]);
+                propertyTypeSet.add(row["Property Type"]);
+            });
+            
+            let stateDropdown = document.getElementById('stateFilter');
+            let propertyTypeDropdown = document.getElementById('propertyTypeFilter');
+            
+            stateDropdown.innerHTML = [...stateSet].map(s => `<option value="${s}">${s}</option>`).join('');
+            propertyTypeDropdown.innerHTML = [...propertyTypeSet].map(pt => `<option value="${pt}">${pt}</option>`).join('');
+        }
+        
+        function createCharts() {
+            let ctx = document.getElementById('propertyTypeChart').getContext('2d');
+            let propertyCounts = {};
+            
+            data.forEach(row => {
+                let type = row["Property Type"] || "Unknown";
+                propertyCounts[type] = (propertyCounts[type] || 0) + 1;
+            });
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(propertyCounts),
+                    datasets: [{
+                        label: 'Number of Properties',
+                        data: Object.values(propertyCounts),
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                    }]
+                }
+            });
+        }
+        
+        Grist.ready();
+        Grist.onRecords(records => {
+            data = records.map(r => r.fields);
+            populateFilters();
+            updateDashboard();
+            createCharts();
+        });
+        
+        document.getElementById('stateFilter').addEventListener('change', updateDashboard);
+        document.getElementById('propertyTypeFilter').addEventListener('change', updateDashboard);
+    </script>
 </body>
 </html>
