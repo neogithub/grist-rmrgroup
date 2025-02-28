@@ -18,8 +18,8 @@
     <div class="container">
         <h2>Property Dashboard</h2>
         <div class="filters">
-            <select id="stateFilter"><option value="All">All States</option></select>
-            <select id="propertyTypeFilter"><option value="All">All Property Types</option></select>
+            <select id="stateFilter"></select>
+            <select id="propertyTypeFilter"></select>
         </div>
         <div class="stats">
             <div class="stat-box" id="totalProperties">Total Properties: 0</div>
@@ -29,7 +29,7 @@
         <canvas id="propertyTypeChart"></canvas>
     </div>
     <script>
-        let data = []; // This will hold the Grist data
+        let data = []; 
         
         function updateDashboard() {
             let state = document.getElementById('stateFilter').value;
@@ -50,8 +50,8 @@
             let propertyTypeSet = new Set(['All']);
             
             data.forEach(row => {
-                stateSet.add(row["State"]);
-                propertyTypeSet.add(row["Property Type"]);
+                if (row["State"]) stateSet.add(row["State"]);
+                if (row["Property Type"]) propertyTypeSet.add(row["Property Type"]);
             });
             
             let stateDropdown = document.getElementById('stateFilter');
